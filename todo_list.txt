@@ -1,0 +1,15 @@
+to write:
+
+dynamic uart (config at runtime)
+
+memory wrappers
+
+10/100/1000 mac
+
+packet buffers
+
+tcp server
+
+telnet server
+
+terminal server top level design
