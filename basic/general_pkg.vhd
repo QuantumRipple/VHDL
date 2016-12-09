@@ -7,13 +7,14 @@ package general_pkg is
    type t_unsigned_vec is array (natural range <>) of unsigned; --note: requires VHDL-2008
    type t_slv_vec is array (natural range <>) of std_logic_vector; --note: requires VHDL-2008
    
-   function f_log2_ceil (a : in integer := 1) return integer;
-   function f_min_integer (a : t_integer_vec) return integer;
-   function f_max_integer (a : t_integer_vec) return integer;
+   function f_log2_ceil   (a : in integer := 1)  return integer;
+   function f_is_pow2     (i : in integer := 1)  return boolean;
+   function f_min_integer (a : t_integer_vec)    return integer;
+   function f_max_integer (a : t_integer_vec)    return integer;
    function f_gray_to_bin (a : std_logic_vector) return unsigned;
-   function f_bin_to_gray (a : unsigned) return std_logic_vector;
-   function f_gray_next (a : std_logic_vector) return std_logic_vector;
-   function f_gray_rom (n : positive) return t_slv_vec;
+   function f_bin_to_gray (a : unsigned)         return std_logic_vector;
+   function f_gray_next   (a : std_logic_vector) return std_logic_vector;
+   function f_gray_rom    (n : positive)         return t_slv_vec;
    
 end general_pkg;
 
@@ -29,6 +30,11 @@ package body general_pkg is
       end loop;
       return 31;
    end f_log2_ceil;
+   
+   function f_is_pow2 (i : in integer := 1) return boolean is
+   begin
+      return i = 2**f_log2_ceil(i);
+   end f_is_pow2;
    
    function f_min_integer (a : t_integer_vec) return integer is
       variable temp : integer;
