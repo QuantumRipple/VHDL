@@ -4,7 +4,7 @@ use ieee.numeric_std.all;
 
 use work.general_pkg.all;
 
-entity rs232_tx is
+entity fixed_uart_tx is
    generic(
       clocks_per_bit : positive := 16;
       data_bits      : positive := 8;
@@ -22,9 +22,9 @@ entity rs232_tx is
       en     : in  std_logic; --ignored if asserted when ready is low
       ready  : out std_logic
    );
-end rs232_tx;
+end fixed_uart_tx;
 
-architecture rtl of rs232_tx is
+architecture rtl of fixed_uart_tx is
    signal data_i   : std_logic_vector(data_bits-1 downto 0);
    signal parity_i : std_logic;
    
@@ -34,7 +34,7 @@ architecture rtl of rs232_tx is
    type t_state is (s_idle, s_data, s_parity, s_stop, s_stop_2, s_hold);
    signal state : t_state := s_hold;
 begin
-   assert not(parity_odd and parity_even) report "rs232_tx parity misconfigured" severity error;
+   assert not(parity_odd and parity_even) report "fixed_uart_tx parity misconfigured" severity error;
 
    p_tx : process(clk)
    begin

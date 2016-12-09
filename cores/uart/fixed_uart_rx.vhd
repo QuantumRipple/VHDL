@@ -5,7 +5,7 @@ use ieee.numeric_std.all;
 use work.general_pkg.all;
 
 
-entity rs232_rx is
+entity fixed_uart_rx is
    generic(
       clocks_per_bit : positive := 16;
       data_bits      : positive := 8;
@@ -23,9 +23,9 @@ entity rs232_rx is
       valid  : out std_logic; --pulses once per word. concurrent with error upon parity failure
       error  : out std_logic --pulse upon parity or stop error
    );
-end rs232_rx;
+end fixed_uart_rx;
 
-architecture rtl of rs232_rx is
+architecture rtl of fixed_uart_rx is
    signal data_i   : std_logic_vector(data_bits-1 downto 0);
    signal parity_i : std_logic;
    
@@ -35,7 +35,7 @@ architecture rtl of rs232_rx is
    type t_state is (s_idle, s_start, s_data, s_parity, s_stop, s_err, s_err_wait);
    signal state : t_state := s_err;
 begin
-   assert not(parity_odd and parity_even) report "rs232_rx parity misconfigured" severity error;
+   assert not(parity_odd and parity_even) report "fixed_uart_rx parity misconfigured" severity error;
 
    p_rx : process(clk)
    begin
