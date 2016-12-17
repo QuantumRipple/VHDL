@@ -1,6 +1,6 @@
 to write:
 
-dynamic uart (config at runtime)
+static & dynamic uart top levels
 
 memory wrappers
 
