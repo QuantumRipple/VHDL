@@ -8,6 +8,7 @@ use work.general_pkg.all;
    
 entity sha256_expander is
    port(
+      clk       : in  std_logic;
       chunk     : in  std_logic_vector(511 downto 0);
       expansion : out std_logic_vector(2047 downto 0); --24 cycle delay
    );

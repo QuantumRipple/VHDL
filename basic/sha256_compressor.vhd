@@ -8,6 +8,7 @@ use work.general_pkg.all;
 
 entity sha256_compressor is
    port(
+      clk       : in  std_logic;
       expansion : in  std_logic_vector(2047 downto 0);
       state     : in  std_logic_vector( 255 downto 0);
       hash      : out std_logic_vector( 255 downto 0); --65 cycle delay
