@@ -16,7 +16,7 @@ entity mining_loop is
       message   : in  std_logic_vector( 95 downto 0);
       nonce     : in  std_logic_vector( 31 downto 0); --only this input should change every cycle
       target    : in  std_logic_vector(223 downto 0); --probably most efficient to have a constant or very small variability in permitted target numbers since 224x 224:1 muxes is super expensive (technically a 255 bit number, but top 32 bits are 0 at easiest difficulty)
-      hit       : out std_logic;
+      hit       : out std_logic
    );
 end entity mining_loop;
 
@@ -25,7 +25,7 @@ architecture struct of mining_loop is
       port(
          clk       : in  std_logic;
          chunk     : in  std_logic_vector(511 downto 0);
-         expansion : out std_logic_vector(2047 downto 0); --24 cycle delay
+         expansion : out std_logic_vector(2047 downto 0) --24 cycle delay
       );
    end component;
    
@@ -34,7 +34,7 @@ architecture struct of mining_loop is
          clk       : in  std_logic;
          expansion : in  std_logic_vector(2047 downto 0);
          state     : in  std_logic_vector( 255 downto 0);
-         hash      : out std_logic_vector( 255 downto 0); --x cycle delay
+         hash      : out std_logic_vector( 255 downto 0) --x cycle delay
       );
    end component;
    
@@ -61,12 +61,11 @@ architecture struct of mining_loop is
    signal chunk2         : std_logic_vector( 511 downto 0);
    signal expansion2     : std_logic_vector(2047 downto 0);
    signal hash2          : std_logic_vector( 255 downto 0);
-   signal difficulty_ext : std_logic_vector( 239 downto 0);
+   signal target_ext     : std_logic_vector( 239 downto 0);
    signal gt             : std_logic;
    signal top0           : std_logic_vector(1 to 3);
    
 begin
-   message : in std_logic_vector(95 downto 0);
 
    chunk1 <= message & nonce & c_padding_1;
 
@@ -104,17 +103,17 @@ begin
       hash      => hash2
    );
    
-   difficulty_ext(239 downto 224) <= (others=>'0');
-   difficulty_ext(223 downto   0) <= difficulty; --TODO: this needs to be delayed to match hash
+   target_ext(239 downto 224) <= (others=>'0');
+   target_ext(223 downto   0) <= target; --TODO: this needs to be delayed to match hash
    
    u_wide_uns_comparator_dsp : wide_uns_comparator_dsp
    generic map (
-      n => 240 --comparison happens in groups of 48, so any n where n mod 48 /= 0 is wasting free resources. We actually only need 224 bits for the dynamic portion of the difficulty
+      n => 240 --comparison happens in groups of 48, so any n where n mod 48 /= 0 is wasting free resources. We actually only need 224 bits for the dynamic portion of the target
    )
    port map (
       clk => clk,
       a   => hash2(239 downto 0),
-      b   => difficulty(239 downto 0),
+      b   => target_ext(239 downto 0),
       gt  => gt, --3 cycles latency
       eq  => open
    );

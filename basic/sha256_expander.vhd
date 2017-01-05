@@ -10,7 +10,7 @@ entity sha256_expander is
    port(
       clk       : in  std_logic;
       chunk     : in  std_logic_vector(511 downto 0);
-      expansion : out std_logic_vector(2047 downto 0); --24 cycle delay
+      expansion : out std_logic_vector(2047 downto 0) --24 cycle delay
    );
 end sha256_expander;
 
@@ -19,7 +19,7 @@ architecture rtl of sha256_expander is
    signal e_set : t_unsigned_vec(0 to 24)(2047 downto 0) := (others=>(others=>'0')); --expansion set, used to pipeline the expansion process
 
 begin
-   e_set(0)(511 downto 0) <= chunk;
+   e_set(0)(511 downto 0) <= unsigned(chunk);
 
    process(clk)
       variable v_s0_a : unsigned(31 downto 0);
@@ -53,5 +53,5 @@ begin
       end if;
    end process;
    
-   expansion <= e_set(24);
+   expansion <=std_logic_vector(e_set(24));
 end rtl;

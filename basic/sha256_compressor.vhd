@@ -11,7 +11,7 @@ entity sha256_compressor is
       clk       : in  std_logic;
       expansion : in  std_logic_vector(2047 downto 0);
       state     : in  std_logic_vector( 255 downto 0);
-      hash      : out std_logic_vector( 255 downto 0); --65 cycle delay
+      hash      : out std_logic_vector( 255 downto 0) --65 cycle delay
    );
 end sha256_compressor;
 
@@ -26,7 +26,9 @@ architecture rtl of sha256_compressor is
      x"19a4c116", x"1e376c08", x"2748774c", x"34b0bcb5", x"391c0cb3", x"4ed8aa4a", x"5b9cca4f", x"682e6ff3",
      x"748f82ee", x"78a5636f", x"84c87814", x"8cc70208", x"90befffa", x"a4506ceb", x"bef9a3f7", x"c67178f2");
 
-   signal d_set : t_unsigned_vec(0 to 64)(255 downto 0); --digest set, used to pipeline compression
+   signal d_set   : t_unsigned_vec(0 to 64)(255 downto 0); --digest set, used to pipeline compression
+   signal state_d : t_unsigned_vec(1 to 64)(255 downto 0); --delay line
+   signal exp_d   : t_unsigned_vec(0 to 63)(2047 downto 0); --average actual delay needed per bit is 32, each delay consumes the need for one word
 begin
 --0 = h
 --1 = g
@@ -38,7 +40,8 @@ begin
 --7 = a
 
 
-   d_set(0) <= state;
+   d_set(0) <= unsigned(state);
+   exp_d(0) <= unsigned(expansion);
    
    process(clk)
       variable v_S1    : unsigned(31 downto 0);
@@ -52,7 +55,7 @@ begin
          for i in 0 to 63 loop
             v_S1 := rotate_right(d_set(i)(32*3+31 downto 32*3),6) xor rotate_right(d_set(i)(32*3+31 downto 32*3),11) xor rotate_right(d_set(i)(32*3+31 downto 32*3),25);
             v_ch := (d_set(i)(32*3+31 downto 32*3) and d_set(i)(32*2+31 downto 32*2)) xor (not(d_set(i)(32*3+31 downto 32*3)) and d_set(i)(32*1+31 downto 32*1));
-            v_temp1 := d_set(i)(32*0+31 downto 32*0) + v_S1 + v_ch + c_k(i) + expansion(32*i+31 downto 32*i);
+            v_temp1 := d_set(i)(32*0+31 downto 32*0) + v_S1 + v_ch + c_k(i) + exp_d(i)(32*i+31 downto 32*i);
             
             v_S0 := rotate_right(d_set(i)(32*7+31 downto 32*7),2) xor rotate_right(d_set(i)(32*7+31 downto 32*7),13) xor rotate_right(d_set(i)(32*7+31 downto 32*7),22);
             v_maj := (d_set(i)(32*7+31 downto 32*7) and d_set(i)(32*6+31 downto 32*6)) xor (d_set(i)(32*7+31 downto 32*7) and d_set(i)(32*5+31 downto 32*5)) xor (d_set(i)(32*6+31 downto 32*6) and d_set(i)(32*5+31 downto 32*5));
@@ -69,9 +72,16 @@ begin
             
          end loop;
          
+         exp_d(1 to 63) <= exp_d(0 to 62);
+         
+         state_d(1) <= unsigned(state);
+         state_d(2 to 64) <= state_d(1 to 63);
+         
          for i in 0 to 7 loop
-            hash(32*i+31 downto 32*i) <= d_set(64)(32*i+31 downto 32*i) + state_d(64)(32*i+31 downto 32*i);
+            hash(32*i+31 downto 32*i) <= std_logic_vector(d_set(64)(32*i+31 downto 32*i) + state_d(64)(32*i+31 downto 32*i));
          end loop;
+         
+         
       end if;
    end process;
 

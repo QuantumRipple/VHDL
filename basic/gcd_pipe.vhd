@@ -17,12 +17,13 @@ use work.general_pkg.all;
 entity gcd_pipe is
    generic (
       n_a : positive := 4; --if n_a/=n_b, n_a should always be larger
-      n_b : positive := 4; --latency = a+b+2
+      n_b : positive := 4 --latency = a+b+2
    );
    port (
-      a : in  std_logic_vector(n_a-1 downto 0);
-      b : in  std_logic_vector(n_b-1 downto 0);
-      c : out std_logic_vector(n_a-1 downto 0);
+      clk : in  std_logic;
+      a   : in  std_logic_vector(n_a-1 downto 0);
+      b   : in  std_logic_vector(n_b-1 downto 0);
+      c   : out std_logic_vector(n_a-1 downto 0)
    );
 end entity gcd_pipe;
 
@@ -36,16 +37,15 @@ architecture rtl of gcd_pipe is
    signal gcd_p : unsigned(n_a-1 downto 0);
    signal gcd_i : unsigned(n_a-1 downto 0);
 begin
-   assert n_a >= n_b severity failure report "n_a must be greater than or equal to n_b";
-   assert n_a >= 2   severity failure report "n_a must be greater than or equal to 2";
-   assert n_b >= 2   severity failure report "n_b must be greater than or equal to 2";
+   assert n_a >= n_b report "n_a must be greater than or equal to n_b" severity failure;
+   assert n_a >= 2   report "n_a must be greater than or equal to 2" severity failure;
+   assert n_b >= 2   report "n_b must be greater than or equal to 2" severity failure;
    
    a_pipe(0) <= unsigned(a);
    b_pipe(0) <= unsigned(b);
    k_pipe(0) <= (others=>'0');
    
-   for i in 0 to c_latency-1 generate
-   
+   g_pipe : for i in 0 to c_latency-1 generate
    begin
       process(clk)
       begin

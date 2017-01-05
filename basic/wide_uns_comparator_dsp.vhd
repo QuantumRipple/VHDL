@@ -203,10 +203,10 @@ begin
          RSTP                => '0'  -- 1-bit input: Reset input for PREG
       );
       
-      g_eq_checks : if c_num_dsp-1 generate
+      g_eq_checks : if i=c_num_dsp-1 generate
          gt_i(i) <= cout(3); --cout shold trigger on borrow, meaning a was greater than b to cause the borrow since we're doing b-a in the DSP
-      else
-         gt_i(i) <= cout(3) and and(eq_i(eq_i'left downto i+1)); --if we care about the higher order bits, and_reduce their equality checks
+      else generate
+         gt_i(i) <= cout(3) and and( eq_i(i+1 to eq_i'right) ); --if we care about the higher order bits, and_reduce their equality checks
       end generate;
    end generate;
 
