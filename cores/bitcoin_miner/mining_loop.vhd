@@ -21,23 +21,15 @@ entity mining_loop is
 end entity mining_loop;
 
 architecture struct of mining_loop is
-   component sha256_expander is
+   component sha256 is
       port(
          clk       : in  std_logic;
          chunk     : in  std_logic_vector(511 downto 0);
-         expansion : out std_logic_vector(2047 downto 0) --24 cycle delay
+         state     : in  std_logic_vector(255 downto 0);
+         hash      : out std_logic_vector(255 downto 0) --65 cycle delay
       );
    end component;
-   
-   component sha256_compressor is
-      port(
-         clk       : in  std_logic;
-         expansion : in  std_logic_vector(2047 downto 0);
-         state     : in  std_logic_vector( 255 downto 0);
-         hash      : out std_logic_vector( 255 downto 0) --x cycle delay
-      );
-   end component;
-   
+      
    component wide_uns_comparator_dsp is
       generic (
          n : positive := 48
@@ -51,15 +43,23 @@ architecture struct of mining_loop is
       );
    end component;
    
+   function f_word_reverse (a : std_logic_vector) return std_logic_vector is
+      variable temp : std_logic_vector(a'range);
+   begin
+      assert a'length mod 32 = 0 report "invalid width input" severity failure;
+      for i in 0 to a'length/32 loop
+         temp(32*i+31 downto 32*i) <= a(a'left-i*32 downto a'left-i*32-31);
+      end loop;
+      return temp;
+   end f_word_reverse;
+   
    constant c_init_state : std_logic_vector(255 downto 0) := x"6a09e667" & x"bb67ae85" & x"3c6ef372" & x"a54ff53a" & x"510e527f" & x"9b05688c" & x"1f83d9ab" & x"5be0cd19"; --word 0 is msb slot, word 7 is lsb
-   constant c_padding_1  : std_logic_vector(383 downto 0) := (383=>'1', 63 downto 0 => std_logic_vector(to_unsigned(640,64)), others=>'0');
-   constant c_padding_2  : std_logic_vector(255 downto 0) := (255=>'1', 63 downto 0 => std_logic_vector(to_unsigned(256,64)), others=>'0');
+   constant c_padding_1  : std_logic_vector(383 downto 0) := '1' & 319UX"0" & 64d"128"; 
+   constant c_padding_2  : std_logic_vector(255 downto 0) := '1' & 191UX"0" & 64d"256";
    
    signal chunk1         : std_logic_vector( 511 downto 0);
-   signal expansion1     : std_logic_vector(2047 downto 0);
    signal hash1          : std_logic_vector( 255 downto 0);
    signal chunk2         : std_logic_vector( 511 downto 0);
-   signal expansion2     : std_logic_vector(2047 downto 0);
    signal hash2          : std_logic_vector( 255 downto 0);
    signal target_ext     : std_logic_vector( 239 downto 0);
    signal gt             : std_logic;
@@ -67,38 +67,22 @@ architecture struct of mining_loop is
    
 begin
 
-   chunk1 <= message & nonce & c_padding_1;
+   chunk1 <= f_word_reverse(message & nonce & c_padding_1);
 
-   u_sha256_expander1 : sha256_expander
+   u_sha256_1 : sha256
    port map (
       clk       => clk,
       chunk     => chunk1,
-      expansion => expansion1
-   );
-
-
-   u_sha256_compressor1 : sha256_compressor
-   port map (
-      clk       => clk,
-      expansion => expansion1,
       state     => mid_state, --TODO: needs to be delayed to match expansion
       hash      => hash1
    );
 
-   chunk2 <= hash1 & c_padding_2;
+   chunk2 <= f_word_reverse(hash1 & c_padding_2);
    
-   u_sha256_expander2 : sha256_expander
+   u_sha256_2 : sha256
    port map (
       clk       => clk,
       chunk     => chunk2,
-      expansion => expansion2
-   );
-
-
-   u_sha256_compressor2 : sha256_compressor
-   port map (
-      clk       => clk,
-      expansion => expansion2,
       state     => c_init_state,
       hash      => hash2
    );
