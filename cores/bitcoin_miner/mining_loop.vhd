@@ -47,8 +47,10 @@ architecture struct of mining_loop is
       variable temp : std_logic_vector(a'range);
    begin
       assert a'length mod 32 = 0 report "invalid width input" severity failure;
-      for i in 0 to a'length/32 loop
-         temp(32*i+31 downto 32*i) <= a(a'left-i*32 downto a'left-i*32-31);
+      for i in 0 to a'length/32-1 loop
+         for j in 0 to 31 loop
+            temp(32*i+j) := a(a'high-i*32-31+j);
+         end loop;
       end loop;
       return temp;
    end f_word_reverse;
